@@ -34,7 +34,8 @@ clean:
 	@echo "Limpiando archivos ejecutables..."
 	rm -f $(serial_executable) $(mpi_executable)
 	@echo "Limpieza completada."
-	rm -f cpu_results_*.txt serial_results.txt
+	rm -f results/*.txt
+	rm -f results/*.csv
 	@echo "Limpieza de archivos de resultados completada."
 
 #regla de ayuda para recordar los comandos disponibles

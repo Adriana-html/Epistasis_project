@@ -115,8 +115,8 @@ def main():
     header_pheno = pd.DataFrame(columns=["Trait_Status"])
 
     # 7. Write to shared files via MPI-IO
-    write_mpi_io_csv(comm, rank, "genotypes.csv", gen_bytes, header_gen)
-    write_mpi_io_csv(comm, rank, "phenotypes.csv", pheno_bytes, header_pheno)
+    write_mpi_io_csv(comm, rank, "data/genotypes.csv", gen_bytes, header_gen)
+    write_mpi_io_csv(comm, rank, "data/phenotypes.csv", pheno_bytes, header_pheno)
 
     if rank == 0:
         print("Done! Both files successfully generated and written in parallel via MPI-IO.")

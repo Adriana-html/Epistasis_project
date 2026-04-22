@@ -41,7 +41,7 @@ int main(int argc, const char **argv) {
     // 1. Carga de Fenotipos
     vector<int> phenotypes(num_patients);
     // Nota: Asegúrate de que el nombre coincida con tu archivo (phenotype.bin vs phenotypes.bin)
-    FILE* f_pheno = fopen("phenotypes.bin", "rb"); 
+    FILE* f_pheno = fopen("data/phenotypes.bin", "rb"); 
     if (!f_pheno) {
         cerr << "Error: No se pudo abrir phenotype.bin" << endl;
         return 1;
@@ -53,7 +53,7 @@ int main(int argc, const char **argv) {
 
     // 2. Carga de Genotipos
     vector<int> snps_flat((long long)num_snps * num_patients);
-    FILE* f_geno = fopen("genotypes.bin", "rb");
+    FILE* f_geno = fopen("data/genotypes.bin", "rb");
     if (!f_geno) {
         cerr << "Error: No se pudo abrir genotypes.bin" << endl;
         return 1;
@@ -91,7 +91,7 @@ int main(int argc, const char **argv) {
     chrono::duration<double> diff = end_time - start_time;
 
     // 4. Escritura de resultados
-    ofstream out_file("serial_result.txt");
+    ofstream out_file("results/serial_result.txt");
     out_file << "--- Resultado Serial Epistasis ---" << endl;
     out_file << "SNPs: " << num_snps << ", Pacientes: " << num_patients << endl;
     out_file << "Mejor Par: (rs" << best_i << ", rs" << best_j << ")" << endl;
@@ -99,7 +99,7 @@ int main(int argc, const char **argv) {
     out_file << "Tiempo de ejecucion: " << diff.count() << " segundos." << endl;
     out_file.close();
 
-    cout << "Calculo finalizado. Resultado guardado en 'serial_result.txt'" << endl;
+    cout << "Calculo finalizado. Resultado guardado en 'results/serial_result.txt'" << endl;
     cout << "Tiempo: " << diff.count() << " s" << endl;
 
     return 0;

@@ -70,7 +70,7 @@ int main(int argc, char** argv){
 
     vector<int> snp_data(S * M);
     MPI_File fh;
-    MPI_File_open(MPI_COMM_WORLD,"genotypes.bin",
+    MPI_File_open(MPI_COMM_WORLD,"data/genotypes.bin",
                   MPI_MODE_RDONLY,MPI_INFO_NULL,&fh);
 
     // leer por bloques contiguos
@@ -110,7 +110,7 @@ int main(int argc, char** argv){
 
     if(rank==0){
         MPI_File fh2;
-        MPI_File_open(MPI_COMM_SELF,"phenotypes.bin",
+        MPI_File_open(MPI_COMM_SELF,"data/phenotypes.bin",
                       MPI_MODE_RDONLY,MPI_INFO_NULL,&fh2);
 
         MPI_File_read(fh2,phenotype.data(),M,MPI_INT,MPI_STATUS_IGNORE);
@@ -157,7 +157,7 @@ int main(int argc, char** argv){
     }
 
     // --- ESCRITURA DE ARCHIVOS INDIVIDUALES POR CPU ---
-    string filename = "cpu_results_" + to_string(rank) + ".txt";
+    string filename = "results/cpu_results_" + to_string(rank) + ".txt";
     ofstream outfile(filename);
     outfile << "Rank: " << rank << endl;
     outfile << "Rango de tareas: " << start << " a " << end << endl;

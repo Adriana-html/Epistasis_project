@@ -19,5 +19,5 @@ def generar_binario_limpio(csv_input, bin_output):
         print(f"Error procesando {csv_input}: {e}")
 
 # Ejecución
-generar_binario_limpio('genotypes.csv', 'genotypes.bin')
-generar_binario_limpio('phenotypes.csv', 'phenotypes.bin')
+generar_binario_limpio('data/genotypes.csv', 'data/genotypes.bin')
+generar_binario_limpio('data/phenotypes.csv', 'data/phenotypes.bin')
