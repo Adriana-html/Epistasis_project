@@ -1,0 +1,17 @@
+serial_epistasis
+mpi_epistasis
+
+data/*.bin
+data/*.csv
+*.bin
+*.csv
+*.o
+
+results/*.txt
+cpu_results_*.txt
+serial_result.txt
+
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
