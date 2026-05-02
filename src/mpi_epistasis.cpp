@@ -7,24 +7,26 @@
 #include <unordered_map>
 #include <limits>
 #include <fstream>
-
+#include <cstdint>
 using namespace std;
 
-double calculate_pearson(const int* a, const int* b, const int* y, int M){
-    double sx =0, sy=0, sx2=0, sy2=0, sxy=0;
-    for (int i=0;i<M;i++){
-        double X = a[i]*b[i];
+double calculate_pearson(const int8_t* a, const int8_t* b, const int8_t* y, int M){
+    double sx = 0, sy = 0, sx2 = 0, sy2 = 0, sxy = 0;
+    for (int i = 0; i < M; i++){
+        // Convertimos a double para evitar desbordamientos en las sumatorias
+        double X = (a[i] * b[i]);
         double Y = y[i];
-        sx+=X; sy+=Y;
-        sx2+=X*X; sy2+=Y*Y;
-        sxy+=X*Y;
+        sx += X; sy += Y;
+        sx2 += X * X; sy2 += Y * Y;
+        sxy += X * Y;
     }
 
-    double num = M*sxy - sx*sy;
-    double den = (M*sx2 - sx*sx)*(M*sy2 - sy*sy);
-    if (den<=0) return 0.0;
+    double num = (double)M * sxy - sx * sy;
+    double den = ((double)M * sx2 - sx * sx) * ((double)M * sy2 - sy * sy);
+    if (den <= 0) return 0.0;
     return num / sqrt(den);
 }
+
 // k → (i,j)
 inline void k_to_ij(long long k, int N, int &i, int &j){
     long long T = (long long)N*(N-1)/2;
@@ -68,7 +70,7 @@ int main(int argc, char** argv){
     sort(snp_ids.begin(), snp_ids.end());
     int S = snp_ids.size();
 
-    vector<int> snp_data(S * M);
+    vector<int8_t> snp_data(S * M);
     MPI_File fh;
     MPI_File_open(MPI_COMM_WORLD,"data/genotypes.bin",
                   MPI_MODE_RDONLY,MPI_INFO_NULL,&fh);
@@ -88,14 +90,14 @@ int main(int argc, char** argv){
         int block_size = end_block - start_block + 1;
 
         MPI_Offset offset =
-            (MPI_Offset)snp_ids[start_block] * M * sizeof(int);
+            (MPI_Offset)snp_ids[start_block] * M * sizeof(int8_t);
 
         MPI_File_read_at_all(
             fh,
             offset,
             &snp_data[start_block*M],
             block_size*M,
-            MPI_INT,
+            MPI_SIGNED_CHAR,
             MPI_STATUS_IGNORE
         );
 
@@ -106,20 +108,20 @@ int main(int argc, char** argv){
 
 
     //Fenotipo
-    vector<int> phenotype(M);
+    vector<int8_t> phenotype(M);
 
     if(rank==0){
         MPI_File fh2;
         MPI_File_open(MPI_COMM_SELF,"data/phenotypes.bin",
                       MPI_MODE_RDONLY,MPI_INFO_NULL,&fh2);
 
-        MPI_File_read(fh2,phenotype.data(),M,MPI_INT,MPI_STATUS_IGNORE);
+        MPI_File_read(fh2,phenotype.data(),M,MPI_SIGNED_CHAR,MPI_STATUS_IGNORE);
         MPI_File_close(&fh2);
     }
 
-    MPI_Bcast(phenotype.data(),M,MPI_INT,0,MPI_COMM_WORLD);
+    MPI_Bcast(phenotype.data(),M,MPI_SIGNED_CHAR,0,MPI_COMM_WORLD);
 
-    //índice rápido (id -> posicion)
+    //índice (id -> posicion)
     vector<int> index_map(N,-1);
     for(int i=0;i<S;i++){
         index_map[snp_ids[i]] = i;
@@ -129,12 +131,6 @@ int main(int argc, char** argv){
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t0 = MPI_Wtime();
-    
-
-    if (rank == 0) {
-        cout << "Check SNP_DATA[0]: " << snp_data[0] << endl;
-        cout << "Check PHENOTYPE[0]: " << phenotype[0] << endl;
-    }
     for(long long k=start;k<end;k++){
         int i,j;
         k_to_ij(k,N,i,j);
@@ -156,7 +152,8 @@ int main(int argc, char** argv){
         }
     }
 
-    // --- ESCRITURA DE ARCHIVOS INDIVIDUALES POR CPU ---
+    double t1 = MPI_Wtime();
+    // --- escritura de archivos por CPU ---
     string filename = "results/cpu_results_" + to_string(rank) + ".txt";
     ofstream outfile(filename);
     outfile << "Rank: " << rank << endl;
@@ -166,7 +163,7 @@ int main(int argc, char** argv){
     outfile << "Score local: " << local_max << endl;
     outfile.close();
 
-    // --- REDUCCIÓN PARA EL GANADOR GLOBAL ---
+    
     struct {
         double val;
         int rank;
@@ -179,7 +176,7 @@ int main(int argc, char** argv){
     MPI_Reduce(&local_out, &global_out, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
     
 
-    double t1 = MPI_Wtime();
+    
 
     if(rank==0){
         cout << "================================\n";

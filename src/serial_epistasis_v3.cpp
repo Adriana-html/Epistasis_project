@@ -1,3 +1,4 @@
+//misma implementacion serial pero con el cambio de tipo de datos a int8_t para genotipos y double para fenotipos, ademas de algunos ajustes menores en la lectura de archivos y escritura de resultados. Este código es la versión usada para el simulador de terceros
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -10,12 +11,13 @@
 using namespace std;
 
 
-double calculate_pearson(const int8_t* snp1, const int8_t* snp2, const int8_t* phenotype, int M) {
+double calculate_pearson(const int8_t* snp1, const int8_t* snp2, const double* phenotype, int M) {
     double sum_X = 0, sum_Y = 0, sum_X2 = 0, sum_Y2 = 0, sum_XY = 0;
 
     for (int i = 0; i < M; ++i) {
-        double X = (double)snp1[i] * snp2[i]; 
-        double Y = (double)phenotype[i];
+        
+        double X = (double)(snp1[i] * snp2[i]); 
+        double Y = phenotype[i]; 
         
         sum_X += X;
         sum_Y += Y;
@@ -39,24 +41,27 @@ int main(int argc, const char **argv) {
     const int num_patients = atoi(argv[1]);
     const int num_snps = atoi(argv[2]);
 
-    // Carga de Fenotipos
-    vector<int8_t> phenotypes(num_patients);
+    
+    vector<double> phenotypes(num_patients);
+    
     
     FILE* f_pheno = fopen("data/phenotypes.bin", "rb"); 
     if (!f_pheno) {
-        cerr << "Error: No se pudo abrir phenotype.bin" << endl;
+        cerr << "Error: No se pudo abrir data/phenotypes.bin" << endl;
         return 1;
     }
-    if (fread(phenotypes.data(), sizeof(int8_t), num_patients, f_pheno) != (size_t)num_patients) {
-            cerr << "Error leyendo phenotypes.bin" << endl;
+    
+    
+    if (fread(phenotypes.data(), sizeof(double), num_patients, f_pheno) != (size_t)num_patients) {
+        cerr << "Error leyendo phenotypes.bin" << endl;
     }
     fclose(f_pheno);
 
-    // Carga de Genotipos
+    
     vector<int8_t> snps_flat((long long)num_snps * num_patients);
     FILE* f_geno = fopen("data/genotypes.bin", "rb");
     if (!f_geno) {
-        cerr << "Error: No se pudo abrir genotypes.bin" << endl;
+        cerr << "Error: No se pudo abrir data/genotypes.bin" << endl;
         return 1;
     }
     size_t total_elements = (size_t)num_snps * num_patients;
@@ -65,19 +70,17 @@ int main(int argc, const char **argv) {
     }
     fclose(f_geno);
 
-    cout << "Datos cargados correctamente. Iniciando calculo serial..." << endl;
+    cout << "Datos cargados correctamente (Phenotypes: double, Genotypes: int8). Iniciando..." << endl;
     
     double global_max = -1.0;
     int best_i = -1, best_j = -1;
 
-    
     auto start_time = chrono::high_resolution_clock::now();
     
     for (int i = 0; i < num_snps; ++i) {
         for (int j = i + 1; j < num_snps; ++j) {
-            // Pasamos la direccion de memoria del inicio de cada SNP
-            double r = calculate_pearson(&snps_flat[i * num_patients], 
-                                         &snps_flat[j * num_patients], 
+            double r = calculate_pearson(&snps_flat[(long long)i * num_patients], 
+                                         &snps_flat[(long long)j * num_patients], 
                                          phenotypes.data(), num_patients);
             
             if (abs(r) > global_max) {
@@ -92,15 +95,13 @@ int main(int argc, const char **argv) {
     chrono::duration<double> diff = end_time - start_time;
 
     // Escritura de resultados
-    ofstream out_file("results/serial_result.txt");
-    out_file << "--- Resultado Serial Epistasis ---" << endl;
+    ofstream out_file("results/serial_result_v3.txt");
+    out_file << "--- Resultado Serial Epistasis V3 (Terceros) ---" << endl;
     out_file << "SNPs: " << num_snps << ", Pacientes: " << num_patients << endl;
-    out_file << "Mejor Par: (rs" << best_i << ", rs" << best_j << ")" << endl;
     out_file << "Max Score (Pearson): " << fixed << setprecision(6) << global_max << endl;
-    out_file << "Tiempo de ejecucion: " << diff.count() << " segundos." << endl;
+    out_file << "Tiempo: " << diff.count() << " s" << endl;
     out_file.close();
 
-    cout << "Calculo finalizado. Resultado guardado en 'results/serial_result.txt'" << endl;
     cout << "Tiempo: " << diff.count() << " s" << endl;
 
     return 0;
